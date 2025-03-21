@@ -73,8 +73,9 @@ paths_to_skip=(
 # list=(${list})
 skip_paths(){
 	local list_param="${1}"
-	[ -z "$list_param" ] && return
-	local list=(${list_param})
+	[[ -z "${list_param}" ]] && return
+	local list
+	mapfile -t list <<< "${list_param}"
 
 	for p in "${paths_to_skip[@]}"; do
 		new_list=()
@@ -87,7 +88,6 @@ skip_paths(){
 	done
 	echo "${list[@]}"
 }
-
 
 long_options=(
 	[all]="Force checking of all changes, including files in the base branch"
