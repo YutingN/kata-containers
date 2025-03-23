@@ -229,7 +229,7 @@ pkg_to_path()
 {
 	local pkg="$1"
 
-	go list -f '{{.Dir}}' "$pkg"
+	go list -f '{{.Dir}}' "${pkg}"
 }
 
 # Check that chronic is installed, otherwise die.
