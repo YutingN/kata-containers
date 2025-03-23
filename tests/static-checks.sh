@@ -235,7 +235,7 @@ pkg_to_path()
 # Check that chronic is installed, otherwise die.
 need_chronic() {
 	local first_word
-	[ -z "$chronic" ] && return
+	[[ -z "${chronic}" ]] && return
 	first_word="${chronic%% *}"
 	command -v chronic &>/dev/null || \
 		die "chronic command not found. You must have it installed to run this check." \
