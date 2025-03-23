@@ -124,8 +124,8 @@ usage()
 {
 	cat <<EOF
 
-Usage: $script_name help
-       $script_name [options] repo-name [true]
+Usage: ${script_name} help
+       ${script_name} [options] repo-name [true]
 
 Options:
 
@@ -134,21 +134,21 @@ EOF
 	local option
 	local description
 
-	local long_option_names="${!long_options[@]}"
+	local -a long_option_names="${!long_options[@]}"
 
 	# Sort space-separated list by converting to newline separated list
 	# and back again.
-	long_option_names=$(echo "$long_option_names"|tr ' ' '\n'|sort|tr '\n' ' ')
+	long_option_names=$(echo "${long_option_names}"|tr ' ' '\n'|sort|tr '\n' ' ')
 
 	# Display long options
 	for option in ${long_option_names}
 	do
-		description=${long_options[$option]}
+		description=${long_options[${option}]}
 
 		# Remove any trailing colon which is for getopt(1) alone.
-		option=$(echo "$option"|sed 's/:$//g')
+		option=${option/%:/}
 
-		printf "    --%-10.10s # %s\n" "$option" "$description"
+		printf "    --%-10.10s # %s\n" "${option}" "${description}"
 	done
 
 	cat <<EOF
@@ -171,16 +171,16 @@ Examples:
 
 - Run all tests on a specific branch (stable or main) of kata-containers repo:
 
-  $ $script_name github.com/kata-containers/kata-containers true
+  $ ${script_name} github.com/kata-containers/kata-containers true
 
 - Auto-detect repository and run golang tests for current repository:
 
-  $ KATA_DEV_MODE=true $script_name --golang
+  $ KATA_DEV_MODE=true ${script_name} --golang 
 
 - Run all tests on the kata-containers repository, forcing the tests to
   consider all files, not just those changed by a PR branch:
 
-  $ $script_name github.com/kata-containers/kata-containers --all
+  $ ${script_name} github.com/kata-containers/kata-containers --all
 
 
 EOF
