@@ -190,7 +190,7 @@ EOF
 func_is_valid() {
 	local name="$1"
 
-	type -t "$name" &>/dev/null || die "function '$name' does not exist"
+	type -t "${name}" &>/dev/null || die "function '${name}' does not exist"
 }
 
 # Calls die() if the specified function is not valid or not a check function.
