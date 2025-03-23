@@ -197,11 +197,11 @@ func_is_valid() {
 ensure_func_is_check_func() {
 	local name="$1"
 
-	func_is_valid "$name"
+	func_is_valid "${name}"
 
-	{ echo "$name" | grep -q "${check_func_regex}"; ret=$?; }
+	{ echo "${name}" | grep -q "${check_func_regex}"; ret=$?; }
 
-	[ "$ret" = 0 ] || die "function '$name' is not a check function"
+	[[ "$ret" = 0 ]] || die "function '${name}' is not a check function"
 }
 
 # Returns "yes" if the specified function needs to run on all architectures,
