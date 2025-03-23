@@ -249,7 +249,7 @@ static_check_go_arch_specific()
 	local submodule_packages
 	local all_packages
 
-	pushd $repo_path
+	pushd "${repo_path}"
 
 	# List of all golang packages found in all submodules
 	#
@@ -257,39 +257,41 @@ static_check_go_arch_specific()
 	# repositories, we assume they are tested independently in their
 	# repository so do not need to be re-tested here.
 	submodule_packages=$(mktemp)
-	git submodule -q foreach "go list ./..." | sort > "$submodule_packages" || true
+	git submodule -q foreach "go list ./..." | sort > "${submodule_packages}" || true
 
 	# all packages
 	all_packages=$(mktemp)
-	go list ./... | sort > "$all_packages" || true
+	go list ./... | sort > "${all_packages}" || true
 
-	files_to_remove+=("$submodule_packages" "$all_packages")
+	files_to_remove+=("${submodule_packages}" "${all_packages}")
 
 	# List of packages to consider which is defined as:
 	#
 	#   "all packages" - "submodule packages"
 	#
 	# Note: the vendor filtering is required for versions of go older than 1.9
-	go_packages=$(comm -3 "$all_packages" "$submodule_packages" || true)
+	go_packages=$(comm -3 "${all_packages}" "${submodule_packages}" || true)
 	go_packages=$(skip_paths "${go_packages[@]}")
 
 	# No packages to test
-	[ -z "$go_packages" ] && popd && return
+	[[ -z "${go_packages}" ]] && popd && return
 
 	local linter="golangci-lint"
 
 	# Run golang checks
-	if [ ! "$(command -v $linter)" ]
+	if [[ ! "$(command -v "${linter}")" ]]
 	then
 		info "Installing ${linter}"
 
-		local linter_url=$(get_test_version "languages.golangci-lint.url")
-		local linter_version=$(get_test_version "languages.golangci-lint.version")
+		local linter_url
+		linter_url=$(get_test_version "languages.golangci-lint.url")
+		local linter_version
+		linter_version=$(get_test_version "languages.golangci-lint.version")
 
 		info "Forcing ${linter} version ${linter_version}"
-		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin "v${linter_version}"
-		command -v $linter &>/dev/null || \
-			die "$linter command not found. Ensure that \"\$GOPATH/bin\" is in your \$PATH."
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$(go env GOPATH)"/bin "v${linter_version}"
+		command -v "${linter}" &>/dev/null || \
+			die "${linter} command not found. Ensure that \"\$GOPATH/bin\" is in your \$PATH."
 	fi
 
 	local linter_args="run -c ${cidir}/.golangci.yml"
@@ -300,28 +302,28 @@ static_check_go_arch_specific()
 	# excluding any that relate to submodules.
 	local dirs
 
-	for pkg in $go_packages
+	for pkg in ${go_packages}
 	do
-		path=$(pkg_to_path "$pkg")
+		path=$(pkg_to_path "${pkg}")
 
 		makefile="${path}/Makefile"
 
 		# perform a basic build since some repos generate code which
 		# is required for the package to be buildable (and thus
 		# checkable).
-		[ -f "$makefile" ] && (cd "$path" && make)
+		[[ -f "${makefile}" ]] && (cd "${path}" && make)
 
-		dirs+=" $path"
+		dirs+=" ${path}"
 	done
 
-	info "Running $linter checks on the following packages:\n"
-	echo "$go_packages"
+	info "Running ${linter} checks on the following packages:\n"
+	echo "${go_packages}"
 	echo
 	info "Package paths:\n"
-	echo "$dirs" | sed 's/^ *//g' | tr ' ' '\n'
+	echo "${dirs}" | sed 's/^ *//g' | tr ' ' '\n'
 	for d in ${dirs};do
-		info "Running $linter on $d"
-		(cd $d && GO111MODULE=auto eval "$linter" "${linter_args}" ".")
+		info "Running ${linter} on ${d}"
+		(cd "${d}" && GO111MODULE=auto eval "${linter}" "${linter_args}" ".")
 	done
 	popd
 
@@ -332,17 +334,17 @@ install_yamllint()
 {
 	package="yamllint"
 
-	case "$ID" in
-		centos|rhel) sudo yum -y install $package ;;
-		ubuntu) sudo apt-get -y install $package ;;
-		fedora) sudo dnf -y install $package ;;
-		*) die "Please install yamllint on $ID" ;;
+	case "${ID}" in
+		centos|rhel) sudo yum -y install ${package} ;;
+		ubuntu) sudo apt-get -y install ${package} ;;
+		fedora) sudo dnf -y install ${package} ;;
+		*) die "Please install yamllint on ${ID}" ;;
 	esac
 
-	have_yamllint_cmd=$(command -v "$yamllint_cmd" || true)
+	have_yamllint_cmd=$(command -v "${yamllint_cmd}" || true)
 
-	if [ -z "$have_yamllint_cmd" ]; then
-		info "Cannot install $package" && return
+	if [[ -z "${have_yamllint_cmd}" ]]; then
+		info "Cannot install ${package}" && return
 	fi
 }
 
@@ -359,14 +361,14 @@ static_check_versions()
 		install_yamllint
 	fi
 
-	pushd $repo_path
+	pushd "${repo_path}"
 
-	[ ! -e "$db" ] && popd && return
+	[[ ! -e "${db}" ]] && popd && return
 
-	if [ -n "$have_yamllint_cmd" ]; then
-		eval "$yamllint_cmd" "$db"
+	if [[ -n "${have_yamllint_cmd}" ]]; then
+		eval "${yamllint_cmd}" "${db}"
 	else
-		info "Cannot check versions as $yamllint_cmd not available"
+		info "Cannot check versions as ${yamllint_cmd} not available"
 	fi
 
 	popd
@@ -374,10 +376,10 @@ static_check_versions()
 
 static_check_labels()
 {
-	[ $(uname -s) != Linux ] && info "Can only check labels under Linux" && return
+	[[ "$(uname -s)" != Linux ]] && info "Can only check labels under Linux" && return
 
 	# Handle SLES which doesn't provide the required command.
-	[ -z "$have_yamllint_cmd" ] && info "Cannot check labels as $yamllint_cmd not available" && return
+	[[ -z "${have_yamllint_cmd}" ]] && info "Cannot check labels as ${yamllint_cmd} not available" && return
 
 	# Since this script is called from another repositories directory,
 	# ensure the utility is built before the script below (which uses it) is run.
@@ -396,7 +398,7 @@ static_check_labels()
 static_check_license_headers()
 {
 	# The branch is the baseline - ignore it.
-	[ "$specific_branch" = "true" ] && return
+	[[ "${specific_branch}" = "true" ]] && return
 
 	# See: https://spdx.org/licenses/Apache-2.0.html
 	local -r spdx_tag="SPDX-License-Identifier"
@@ -409,9 +411,11 @@ static_check_license_headers()
 	header_checks+=("SPDX license header::${license_pattern}")
 	header_checks+=("Copyright header:-i:${copyright_pattern}")
 
-	pushd $repo_path
+	pushd "${repo_path}"
 
 	files=$(get_pr_changed_file_details || true)
+	echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+	echo "$files"
 
 	# Strip off status and convert to array
 	files=($(echo "$files"|awk '{print $NF}'))
