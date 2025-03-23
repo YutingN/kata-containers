@@ -209,11 +209,11 @@ ensure_func_is_check_func() {
 func_is_arch_specific() {
 	local name="$1"
 
-	ensure_func_is_check_func "$name"
+	ensure_func_is_check_func "${name}"
 
-	{ echo "$name" | grep -q "${arch_func_regex}"; ret=$?; }
+	{ echo "${name}" | grep -q "${arch_func_regex}"; ret=$?; }
 
-	if [ "$ret" = 0 ]; then
+	if [[ "${ret}" = 0 ]]; then
 		echo "yes"
 	else
 		echo "no"
